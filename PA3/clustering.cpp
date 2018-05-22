@@ -7,6 +7,8 @@
 std::ofstream outFile;
 
 int n, eps, minPts;
+int minClusterSize = 1000000;
+int minClusterIndex;
 std::string outputFormat;
 
 typedef struct object {
@@ -16,6 +18,7 @@ typedef struct object {
 	double y_coor;
 }object;
 
+std::vector<std::vector<int> > clusters;
 std::vector<object> objects;
 
 bool areNeighbor(int i, int j) {
@@ -47,6 +50,18 @@ void unionNeighbors(std::vector<int>* originalNeighbor, std::vector<int> newNeig
 	}
 }
 
+void setMinCluster() {
+    int min = 1000000;
+    int i;
+    for (i = 0; i < clusters.size(); i++) {
+        if (clusters[i].size() < min) {
+            min = i;
+        }
+    }
+    minClusterIndex = i;
+    minClusterSize = min;
+}
+
 void dbScan() {
 	int clusterNumber = 0;
 	for (int i = 0; i < objects.size(); i++) {
@@ -59,7 +74,7 @@ void dbScan() {
 			continue;
 		}
 
-		outFile.open(outputFormat + std::to_string(clusterNumber) + ".txt");
+		//outFile.open(outputFormat + std::to_string(clusterNumber) + ".txt");
 		clusterNumber++;
 		objects[i].type = clusterNumber;
 		int it = -1;
@@ -71,15 +86,34 @@ void dbScan() {
 			if (objects[neighbors[it]].type != 0) {
 				continue;
 			}
-			outFile << neighbors[it] << std::endl;
+			//outFile << neighbors[it] << std::endl;
 			objects[neighbors[it]].type = clusterNumber;
 			std::vector<int> newNeighbors = getNeighbos(neighbors[it]);
 			if (newNeighbors.size() + 1 >= minPts) { // add self
 				unionNeighbors(&neighbors, newNeighbors);
 			}
 		}
-		outFile.close();
+        
+        if (clusters.size() < n) {
+            clusters.push_back(neighbors);
+            setMinCluster();
+        }
+        else if (clusters.size() >= n && neighbors.size() > minClusterSize) {
+            clusters[minClusterIndex] = neighbors;
+            setMinCluster();
+            
+        }
 	}
+}
+
+void printAllCluster() {
+    for (int i = 0; i < clusters.size(); i++) {
+        outFile.open(outputFormat + std::to_string(i) + ".txt");
+        for (int j = 0; i < clusters[i].size(); i++) {
+            outFile << clusters[i][j] << std::endl;
+        }
+        outFile.close();
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -110,7 +144,6 @@ int main(int argc, char *argv[]) {
 
 	inFile.close();
 	dbScan();
-	objects;
 	return 0;
 }
 
