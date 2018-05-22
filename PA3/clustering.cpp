@@ -7,7 +7,7 @@
 std::ofstream outFile;
 
 int n, eps, minPts;
-int minClusterSize = 1000000;
+//int minClusterSize = 1000000;
 int minClusterIndex;
 std::string outputFormat;
 
@@ -51,15 +51,15 @@ void unionNeighbors(std::vector<int>* originalNeighbor, std::vector<int> newNeig
 }
 
 void setMinCluster() {
-    int min = 1000000;
-    int i;
-    for (i = 0; i < clusters.size(); i++) {
-        if (clusters[i].size() < min) {
-            min = i;
+    int minIndex = 0;
+    for (int i = 0; i < clusters.size(); i++) {
+        printf ("%d %lu\n", i, clusters[i].size());
+        if (clusters[i].size() < clusters[minIndex].size()) {
+            minIndex = i;
         }
     }
-    minClusterIndex = i;
-    minClusterSize = min;
+    minClusterIndex = minIndex;
+    printf("min index, min size : %d %lu\n\n\n", minClusterIndex, clusters[minClusterIndex].size());
 }
 
 void dbScan() {
@@ -93,15 +93,14 @@ void dbScan() {
 				unionNeighbors(&neighbors, newNeighbors);
 			}
 		}
-        
+        printf("input size : %lu\n", neighbors.size());
         if (clusters.size() < n) {
             clusters.push_back(neighbors);
             setMinCluster();
         }
-        else if (clusters.size() >= n && neighbors.size() > minClusterSize) {
+        else if (clusters.size() >= n && neighbors.size() > clusters[minClusterIndex].size()) {
             clusters[minClusterIndex] = neighbors;
             setMinCluster();
-            
         }
 	}
 }
@@ -109,7 +108,7 @@ void dbScan() {
 void printAllCluster() {
     for (int i = 0; i < clusters.size(); i++) {
         outFile.open(outputFormat + std::to_string(i) + ".txt");
-        for (int j = 0; i < clusters[i].size(); i++) {
+        for (int j = 0; j < clusters[i].size(); j++) {
             outFile << clusters[i][j] << std::endl;
         }
         outFile.close();
@@ -144,6 +143,7 @@ int main(int argc, char *argv[]) {
 
 	inFile.close();
 	dbScan();
+    printAllCluster();
 	return 0;
 }
 
