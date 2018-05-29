@@ -3,6 +3,7 @@
 #include <vector>
 #include <math.h>
 #include <string>
+#include <algorithm>
 
 std::ofstream outFile;
 
