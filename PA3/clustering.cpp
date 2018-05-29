@@ -74,7 +74,6 @@ void dbScan() {
 			continue;
 		}
 
-		//outFile.open(outputFormat + std::to_string(clusterNumber) + ".txt");
 		clusterNumber++;
 		objects[i].type = clusterNumber;
 		int it = -1;
@@ -86,7 +85,6 @@ void dbScan() {
 			if (objects[neighbors[it]].type != 0) {
 				continue;
 			}
-			//outFile << neighbors[it] << std::endl;
 			objects[neighbors[it]].type = clusterNumber;
 			std::vector<int> newNeighbors = getNeighbos(neighbors[it]);
 			if (newNeighbors.size() + 1 >= minPts) { // add self
