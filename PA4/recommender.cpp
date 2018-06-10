@@ -4,8 +4,6 @@
 #include <vector>
 #include <string>
 
-#define MAX_SIZE 10000
-
 int **user_item_arr;
 double **pcc_arr;
 bool **neighbor_arr;
@@ -40,24 +38,29 @@ double getAverage(int user) {
 }
 
 double getPCC(int user_a, int user_b) {
-	double child = 0, parent = 0;
-	double parent_part1 = 0, parent_part2 = 0;
-	double user_a_average = getAverage(user_a);
-	double user_b_average = getAverage(user_b);
-	std::vector<int> itemsBothRate = getItemsBothRate(user_a, user_b);
-	if (itemsBothRate.size() < 2) {
-		return 0;
+	if (pcc_arr[user_a][user_b] == 0) {
+		double child = 0, parent = 0;
+		double parent_part1 = 0, parent_part2 = 0;
+		double user_a_average = getAverage(user_a);
+		double user_b_average = getAverage(user_b);
+		std::vector<int> itemsBothRate = getItemsBothRate(user_a, user_b);
+		if (itemsBothRate.size() < 2) {
+			return 0;
+		}
+		for (std::vector<int>::iterator it = itemsBothRate.begin(); it != itemsBothRate.end(); ++it) {
+			double temp1 = ((double)user_item_arr[user_a][*it] - user_a_average);
+			double temp2 = ((double)user_item_arr[user_b][*it] - user_b_average);
+			child += temp1 * temp2;
+			parent_part1 += temp1 * temp1;
+			parent_part2 += temp2 * temp2;
+		}
+		parent = sqrt(parent_part1 * parent_part2);
+		if (parent != 0) { 
+			pcc_arr[user_a][user_b] = child / parent; 
+			pcc_arr[user_b][user_a] = child / parent;
+		}
 	}
-	for (std::vector<int>::iterator it = itemsBothRate.begin(); it != itemsBothRate.end(); ++it) {
-		double temp1 = ((double)user_item_arr[user_a][*it] - user_a_average);
-		double temp2 = ((double)user_item_arr[user_b][*it] - user_b_average);
-		child += temp1 * temp2;
-		parent_part1 += temp1 * temp1;
-		parent_part2 += temp2 * temp2;
-	}
-	parent = sqrt(parent_part1 * parent_part2);
-	if (parent == 0) { return 0; }
-	else { return child / parent; }
+	return pcc_arr[user_a][user_b];
 }
 
 void setAllNeighbor() {
@@ -67,8 +70,6 @@ void setAllNeighbor() {
 			if (tempPCC > minPCC) {
 				neighbor_arr[i][j] = true;
 				neighbor_arr[j][i] = true;
-				pcc_arr[i][j] = tempPCC;
-				pcc_arr[j][i] = tempPCC;
 			}
 		}
 	}
@@ -95,9 +96,9 @@ int getAggregation(int user, int item) {
 		if (user_item_arr[*it][item] == 0) {
 			continue;
 		}
-		k += pcc_arr[user][*it];
-		double temp = user_item_arr[*it][item];
-		result += pcc_arr[user][*it] * (temp - neighbor_average);
+		double temp = getPCC(user, *it);
+		k += temp;
+		result += temp * (user_item_arr[*it][item] - neighbor_average);
 	}
 	//std::cout << user_average << " " << result / k << std::endl;
 	if (k == 0) {
@@ -142,8 +143,6 @@ int main(int argc, char *argv[]) {
 		pcc_arr[i] = new double[max_user_id + 1]();
 	}
 
-	std::cout << max_user_id << " " <<  max_item_id << std::endl;
-
 	//initialize array
 	inFile.open(argv[1]);
 	int before_user_id = -1, before_item_id = -1;
@@ -161,7 +160,6 @@ int main(int argc, char *argv[]) {
 
 	setAllNeighbor();
 	inFile.open(argv[2]);
-	std::cout << 1 << std::endl;
 	std::string outputFormat = "u";
 	outputFormat.push_back(argv[1][1]);
 	outputFormat += ".base_prediction.txt";
@@ -180,6 +178,5 @@ int main(int argc, char *argv[]) {
 		num++;
 	}
 
-	std::cout << sqrt((double)sum / (double)num) << std::endl;
 	return 0;
 }
